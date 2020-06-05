@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Search from './components/search/Search';
+import Search from './pages/search/Search';
 
 export default {
   name: 'App',

@@ -4,8 +4,8 @@
       <v-col sm="8" lg="4">
         <v-text-field
           v-model="text"
-          id="search"
-          label="Buscar por filme"
+          id="search-input"
+          label="Type a movie name"
           outlined
           @keyup.enter="$emit('search', text)"
         />
@@ -16,7 +16,7 @@
 
 <script>
 export default {
-  name: 'search',
+  name: 'search-input',
   data() {
     return {
       text: null,

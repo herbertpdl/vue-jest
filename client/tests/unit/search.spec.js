@@ -1,26 +1,81 @@
-import { shallowMount } from '@vue/test-utils'
-import Search from "@/components/search/Search"
+import Vue from 'vue'
+import { mount } from '@vue/test-utils'
+import Search from '@/pages/search/Search'
 
-describe('Search.vue test', () => {
-  const wrapper = shallowMount(Search);
+import axios from 'axios'
 
-  // find input element
-  const input = wrapper.find('#search')
+// mock axios library
+jest.mock('axios')
 
-  it('Emmit custom event with input value, when press enter', () => {
-    // set data value
-    wrapper.setData({text: 'search text'})
+describe('Tests for Search.vue with successful HTTP GET', () => {
+  let wrapper = null
 
-    // simulate pressing enter
-    input.trigger('keyup', {key: 'Enter'});
-  
-    // check if the component emmited the event
-    expect(wrapper.emitted('search')).toBeTruthy()
+  beforeEach(() => {
+    // create mock based on api response
+    const responseGet = {
+      data: {
+        Reponse: "True",
+        Search: [
+          {
+            Poster: "https://m.media-amazon.com/images/M/MV5BMTM3NTg2NDQzOF5BMl5BanBnXkFtZTcwNjc2NzQzOQ@@._V1_SX300.jpg",
+            Title: "Fast & Furious 6",
+            Type: "movie",
+            Year: "2013",
+            imdbID: "tt1905041",
+          },
+          {
+            Poster: "https://m.media-amazon.com/images/M/MV5BMTUxNTk5MTE0OF5BMl5BanBnXkFtZTcwMjA2NzY3NA@@._V1_SX300.jpg",
+            Title: "Fast Five",
+            Type: "movie",
+            Year: "2011",
+            imdbID: "tt1596343",
+          }
+        ],
+        totalResults: "2"
+      }      
+    }
 
-    // check if the event was emmited once
-    expect(wrapper.emitted('search').length).toBe(1)
+    // set the mock call to GET to return a successful GET response
+    axios.get.mockResolvedValue(responseGet)
 
-    // check emmited value
-    expect(wrapper.emitted('search')[0]).toEqual(['search text'])
+    // render component
+    wrapper = mount(Search)
+  })
+
+  afterEach(() => {
+    jest.resetModules()
+    jest.clearAllMocks()
+  })
+
+  it('Renders sub-components when component is created', () => {
+    // check component name
+    expect(wrapper.name()).toMatch('search')
+
+    // check that search input is rendered
+    expect(wrapper.find('#search-input').exists()).toBeTruthy()
+
+    // check if data is properly set
+    expect(wrapper.vm.movies).toBeNull()
+    expect(wrapper.vm.totalResults).toBeNull()
+  })
+
+  it('Load data when handleSearch method is called', (done) => {
+    // set done as error handler to use it inside $nextTick promise
+    Vue.config.errorHandler = done
+
+    wrapper.vm.handleSearch('fast')
+
+    // check if request is called once and validate payload
+    expect(axios.get).toHaveBeenCalledTimes(1)
+    expect(axios.get).toBeCalledWith(expect.stringMatching(/fast/))
+
+    // wait for next dom update with $nextTick
+    wrapper.vm.$nextTick().then(() => {
+      // check if data was properly set
+      expect(wrapper.vm.movies[0].Title).toMatch('Fast & Furious 6')
+      expect(wrapper.vm.totalResults).toMatch('2')
+      done()
+    })
+
   })
 })
